@@ -1,0 +1,7 @@
+*{margin:0 auto;padding:0px;outline:none;box-sizing:border-box;}
+body{overflow:hidden;}
+.ng-slider-wrapper{width:100%;float:left;}
+.ng-slider-wrapper .slides-wrapper{width:100%;float:left;overflow:hidden;}
+.ng-slider-wrapper .slides-wrapper ul{float:left;list-style-type:none;margin-left:0px;-ms-transition: all 1s ease-in-out;-webkit-transition: all 1s ease-in-out;transition: all 1s ease-in-out;}
+.ng-slider-wrapper .slides-wrapper li{float:left;}
+.ng-slider-wrapper .slides-wrapper li img{width:100%;float:left;}
