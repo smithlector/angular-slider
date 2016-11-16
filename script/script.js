@@ -16,7 +16,8 @@
 			],
 			//animationTransition: 500,
 			indicators: true,
-			controlNav: true
+			controlNav: true,
+			breakpoints: { xs: 1, mobile: 2, tablet: 2, desktop: 1 },
 		};
 	}]);
 })(window, document);

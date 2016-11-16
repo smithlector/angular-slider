@@ -14,7 +14,6 @@
 			autoPlay: true,
 			pauseOnHover: true,
 		};
-		var windowW = window.outerWidth;
 		var screen = 'desktop';
 		this.$get = ['$window', '$rootScope', '$timeout', function($window, $rootScope, $timeout){
 			function SliderFactory(element, config){
@@ -29,6 +28,19 @@
 				scope.current = scope.direction = 0;
 				scope.$indicators = scope.$controlNav = false;
 				$slider.init = function(){
+					scope.$slides = options.slides;
+					if(options.indicators) scope.$indicators = true;
+					if(options.controlNav) scope.$controlNav = true;
+					scope.viewPort();
+					box.style.transition = 'all '+(options.animationTransition / 1000)+'s ease-in-out';
+					element.on('mouseenter', scope.$onMouseEnter);
+					element.on('mouseleave', scope.$onMouseLeave);
+				};
+				angular.element($window).bind('resize', function(){
+					scope.viewPort();
+				});
+				scope.viewPort = function(){
+					var windowW = $window.innerWidth;
 					if(windowW >= 992){
 						screen = 'desktop';
 					}else if(768 <= windowW && windowW < 992){
@@ -38,17 +50,12 @@
 					}else{
 						screen = 'xs';
 					}
-					scope.$slides = options.slides;
+					
 					if(angular.isDefined(options.breakpoints[screen])) scope.$slidesInViewport = options.breakpoints[screen];
-					
-					if(options.indicators) scope.$indicators = true;
-					if(options.controlNav) scope.$controlNav = true;
 					scope.$indicator = (scope.$slidesInViewport === 1) ? scope.$slides.length : (scope.$slides.length - scope.$slidesInViewport + 1);
-					
-					box.style.width = ((parentW / scope.$slidesInViewport) * scope.$slides.length)+'px';
-					box.style.transition = 'all '+(options.animationTransition / 1000)+'s ease-in-out';
-					element.on('mouseenter', scope.$onMouseEnter);
-					element.on('mouseleave', scope.$onMouseLeave);
+					box.style.width = ((100 / scope.$slidesInViewport) * scope.$slides.length)+'%';
+					scope.current = 0;
+					scope.$select(scope.current);
 				};
 				scope.$on('onRepeatLast', function(){
 					scope.$setItems();
@@ -57,7 +64,7 @@
 					items = element[0].querySelectorAll('.slide');
 					items[scope.current].classList.add('active');
 					for(var i = 0; i < scope.$slides.length; i++){
-						items[i].style.width = (parentW / scope.$slidesInViewport)+'px';
+						items[i].style.width = (100 / items.length)+'%';
 					}
 					if(options.autoPlay) scope.$play();
 				}
@@ -88,7 +95,7 @@
 					if(scope.direction === 1 && !items[scope.current + (scope.$slidesInViewport - 1)]){
 						scope.current = 0;
 					}
-					box.style.marginLeft = '-'+((parentW / scope.$slidesInViewport) * scope.current)+'px';
+					box.style.marginLeft = '-'+((100 / scope.$slidesInViewport) * scope.current)+'%';
 				};
 				scope.$onMouseEnter = function(evt){
 					if(options.pauseOnHover) scope.$stop();
