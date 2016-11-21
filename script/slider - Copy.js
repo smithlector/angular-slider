@@ -1,98 +1,144 @@
 (function(window, document, undefined) {
-	angular.module('myApp', [])
-	.controller('SliderController', ['$scope', '$element', function($scope, $element){
-		$scope.slides = [
-			{id: 1, content: 'images/1.jpg'},
-			{id: 2, content: 'images/2.jpg'},
-			{id: 3, content: 'images/3.jpg'},
-			{id: 4, content: 'images/4.jpg'},
-			{id: 5, content: 'images/5.jpg'},
-			{id: 6, content: 'images/6.jpg'},
-		];
-		$scope.indicator = ($scope.slideshow == 1) ? $scope.slides.length : ($scope.slides.length - $scope.slideshow + 1);
-		var box = document.querySelector('.slides');
-		var items, parentW = box.parentElement.offsetWidth, direction = 0;
-		$scope.$on('onRepeatLast', function(){
-			$scope.updateConfig();
-		});
-		$scope.prev = function(){
-			direction = -1;
-			$scope.current = $scope.current + direction;
-			$scope.moveSlide();
+	'use strict';
+	angular.module('ular.ngResponsive', [])
+	.provider('slider', function () {
+		var defaults = this.defaults = {
+			indicators: false,
+			controlNav: false,
+			templateUrl: 'template/slider.html',
+			interval: 3000,
+			animationTransition: 400,
+			responsive: true,
+			breakpoints: { xs: 1, mobile: 2, tablet: 2, desktop: 3 },
+			slides: [],
+			autoPlay: true,
+			pauseOnHover: true,
 		};
-		$scope.next = function(){
-			direction = 1;
-			$scope.current = $scope.current + direction;
-			$scope.moveSlide();
-		};
-		$scope.moveSlide = function(){
-			if(direction === -1 && $scope.current < 0){
-				$scope.current = $scope.slides.length - $scope.slideshow;
+		var screen = 'desktop';
+		this.$get = ['$window', '$rootScope', '$timeout', function($window, $rootScope, $timeout){
+			function SliderFactory(element, config){
+				var $slider = {};
+				var options = $slider.$options = angular.extend({}, defaults, config);
+				var scope = $slider.$scope = options.scope;
+				var box = element[0].querySelector('.slides');
+				var items;
+				var parentW = element[0].clientWidth;
+				scope.$slides = [];
+				scope.$slidesInViewport = 1;
+				scope.current = scope.direction = 0;
+				scope.$indicators = scope.$controlNav = false;
+				$slider.init = function(){
+					scope.$slides = options.slides;
+					if(options.indicators) scope.$indicators = true;
+					if(options.controlNav) scope.$controlNav = true;
+					scope.viewPort();
+					box.style.transition = 'all '+(options.animationTransition / 1000)+'s ease-in-out';
+					element.on('mouseenter', scope.$onMouseEnter);
+					element.on('mouseleave', scope.$onMouseLeave);
+				};
+				angular.element($window).bind('resize', function(){
+					scope.viewPort();
+				});
+				scope.viewPort = function(){
+					var windowW = $window.innerWidth;
+					if(windowW >= 992){
+						screen = 'desktop';
+					}else if(768 <= windowW && windowW < 992){
+						screen = 'tablet';
+					}else if(480 <= windowW && windowW < 768){
+						screen = 'mobile';
+					}else{
+						screen = 'xs';
+					}
+					
+					if(angular.isDefined(options.breakpoints[screen])) scope.$slidesInViewport = options.breakpoints[screen];
+					scope.$indicator = (scope.$slidesInViewport === 1) ? scope.$slides.length : (scope.$slides.length - scope.$slidesInViewport + 1);
+					box.style.width = ((100 / scope.$slidesInViewport) * scope.$slides.length)+'%';
+					scope.current = 0;
+					scope.$select(scope.current);
+				};
+				scope.$on('onRepeatLast', function(){
+					scope.$setItems();
+				});
+				scope.$setItems = function(){
+					items = element[0].querySelectorAll('.slide');
+					items[scope.current].classList.add('active');
+					for(var i = 0; i < scope.$slides.length; i++){
+						items[i].style.width = (100 / items.length)+'%';
+						if(options.slides[i].bgColor !== '' || options.slides[i].bgColor !== 'undefined'){
+							items[i].style.background = options.slides[i].bgColor;
+						}
+					}
+					if(options.autoPlay) scope.$play();
+				}
+				scope.$createIndicators = function(num){
+					return new Array(num);
+				};
+				scope.$isActive = function(state){
+					return scope.current === state;
+				}
+				scope.$select = function(index){
+					scope.current = index;
+					scope.moveSlide();
+				}
+				scope.$prev = function(){
+					scope.direction = -1;
+					scope.current = scope.current + scope.direction;
+					scope.moveSlide();
+				};
+				scope.$next = function(){
+					scope.direction = 1;
+					scope.current = scope.current + scope.direction;
+					scope.moveSlide();
+				};
+				scope.moveSlide = function(){
+					if(scope.direction === -1 && scope.current < 0){
+						scope.current = scope.$slides.length - scope.$slidesInViewport;
+					}
+					if(scope.direction === 1 && !items[scope.current + (scope.$slidesInViewport - 1)]){
+						scope.current = 0;
+					}
+					box.style.marginLeft = '-'+((100 / scope.$slidesInViewport) * scope.current)+'%';
+				};
+				scope.$onMouseEnter = function(evt){
+					if(options.pauseOnHover) scope.$stop();
+				};
+				scope.$onMouseLeave = function(evt){
+					if(options.autoPlay) scope.$play();
+				};
+				scope.$play = function(){
+					scope.play = $timeout(function(){
+						scope.$next();
+						scope.$play();
+					}, options.interval);
+				};
+				scope.$stop = function(){
+					$timeout.cancel(scope.play);
+				};
+				$slider.init();
+				return $slider;
 			}
-			if(direction === 1 && !items[$scope.current + ($scope.slideshow - 1)]){
-				$scope.current = 0;
-			}
-			box.style.marginLeft = '-'+((parentW / $scope.slideshow) * $scope.current)+'px';
-		};
-		$scope.updateList = function(){
-			$scope.updateConfig();
-			$scope.moveSlide();
-		};
-		$scope.$watch('slides', function(){
-			$scope.updateConfig();
-		});
-		$scope.updateConfig = function(){
-			items = box.querySelectorAll('.slide');
-			$scope.current = 0;
-			items[$scope.current].classList.add('active');
-			box.style.width = (parentW * items.length)+'px';
-			for(var i = 0; i < items.length; i++){
-				items[i].style.width = (parentW / $scope.slideshow)+'px';
-			}
-		};
-		$scope.createIndicators = function(num){
-			return new Array(num);
-		};
-		$scope.select = function(index){
-			$scope.current = index;
-			$scope.moveSlide();
-		}
-		$scope.isActive = function(state){
-			return $scope.current === state;
-		}
-	}]).directive('slider', ['$http', '$compile', function($http, $compile){
+			SliderFactory.defaults = defaults;
+			return SliderFactory;
+		}];
+	}).directive('sliderResponsive', ['$http', '$sce', 'slider', function($http, $sce, slider){
 		return {
-			restrict : 'E',
-			controller: 'SliderController',
-			controllerAs: 'SCtrl',
-			scope: {
-				slideshow: '@',
-				slideindicator: '@',
-				directionnav: '@'
-			},
+			restrict : 'EA',
 			templateUrl : 'template/slider.html',
-			link: function(scope, element, attrs) {
-				if(!scope.slideshow){
-					scope.slideshow = 1;
-				}else{
-					scope.slideshow = attrs.slideshow;
+			scope: true,
+			link: function(scope, element, attr, transclusion) {
+				var options = {
+					scope: scope
+				};
+				if(angular.isDefined(scope.slider)){
+					angular.forEach(scope.slider, function(key, value) {
+						options[value] = key;
+					});
 				}
-				if(!scope.slideindicator){
-					scope.slideindicator = 'false';
-				}else{
-					scope.slideindicator = attrs.slideindicator;
-				}
-				if(!scope.directionnav){
-					scope.directionnav = 'true';
-				}else{
-					scope.directionnav = attrs.directionnav;
-				}
-				angular.element(element[0].querySelector('a.back-slide')).bind('click', function(){
-					scope.prev();
+				angular.forEach(scope.slider.slides, function(key, value) {
+					scope.slider.slides[value].content = $sce.trustAsHtml(key.content);
 				});
-				angular.element(element[0].querySelector('a.forward-slide')).bind('click', function(){
-					scope.next();
-				});
+				var sliderres = slider(element, options);
 			}
 		};
 	}]).directive('onLastRepeat', function(){

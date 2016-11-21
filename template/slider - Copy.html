@@ -1,12 +1,13 @@
 <div class="slides-wrapper">
 	<ul class="slides">
-		<li class="slide" ng-repeat="slide in slides" on-last-repeat>
-			<img ng-src="{{slide.content}}"/>
+		<li class="slide" ng-repeat="slide in $slides" ng-style="{'background:slide.bgColor' : slide.bgColor}" on-last-repeat>
+			<img ng-if="slide.image !== ''" ng-src="{{slide.image}}"/>
+			<div ng-if="slide.content !== ''" ng-bind-html="slide.content" class="col-xs-12 content"></div>
 		</li>
 	</ul>
 </div>
-<a ng-show="directionnav == 'true'" class="ion-ios-arrow-back back-slide direction-nav"></a>
-<a ng-show="directionnav == 'true'" class="ion-ios-arrow-forward forward-slide direction-nav"></a>
-<ul ng-show="slideindicator == 'true'" class="slides-indicator">
-	<li ng-repeat="i in createIndicators(indicator) track by $index" ng-class="{active: isActive($index)}" ng-click="select($index)"></li>
+<a ng-show="$controlNav" class="ion-ios-arrow-back back-slide direction-nav" ng-click="$prev()"></a>
+<a ng-show="$controlNav" class="ion-ios-arrow-forward forward-slide direction-nav" ng-click="$next()"></a>
+<ul ng-show="$indicators" class="slides-indicator">
+	<li ng-repeat="i in $createIndicators($indicator) track by $index" ng-class="{active: $isActive($index)}" ng-click="$select($index)"></li>
 </ul>

@@ -1,8 +1,8 @@
 <div class="slides-wrapper">
 	<ul class="slides">
-		<li class="slide" ng-repeat="slide in $slides" on-last-repeat>
+		<li class="slide" ng-repeat="slide in $slides" ng-style="{'background:slide.bgColor' : slide.bgColor}" on-last-repeat>
 			<img ng-if="slide.image !== ''" ng-src="{{slide.image}}"/>
-			<div ng-if="slide.content !== ''" ng-bind-html="slide.content" class="col-xs-12"></div>
+			<div ng-if="slide.content !== ''" ng-bind-html="slide.content" class="col-xs-12 content"></div>
 		</li>
 	</ul>
 </div>
